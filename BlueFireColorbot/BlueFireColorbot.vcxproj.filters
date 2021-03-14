@@ -42,9 +42,6 @@
     <ClCompile Include="imgui_impl_win32.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="maincolor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Icon.ico">

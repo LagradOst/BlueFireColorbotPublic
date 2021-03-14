@@ -154,7 +154,6 @@
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="maincolor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Icon.ico" />
