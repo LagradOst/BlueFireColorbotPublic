@@ -1,0 +1,13 @@
+speed=0.2
+maxX=800
+maxY=300
+offsetX=0
+offsetY=5
+flickAim=0
+flickAimTime=30
+full360=21428
+sortingCounter=0
+#All keycodes can be found at https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+holdKey=18
+isHold=1
+invertHold=0
