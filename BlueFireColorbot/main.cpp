@@ -225,7 +225,26 @@ void MoveMouseFromScreenPosition(Vector2 front, int height, int width) {
 }
 
 bool IsPurpleColor(unsigned short red, unsigned short green, unsigned short blue) {
-	return red > 240 && green > 90 && green < 190 && blue > 240;
+	// updated PURPLE FROM https://www.unknowncheats.me/forum/valorant/437368-updated-colors-pixel-bot-act-4-a.html
+	if(green >= 170) {
+		return false;
+	}
+
+	if(green >= 120) {
+		return abs(red - blue) <= 8 &&
+			red - green >= 50 &&
+			blue - green >= 50 &&
+			red >= 105 &&
+			blue >= 105;
+	}
+
+	return abs(red - blue) <= 13 &&
+		red - green >= 60 &&
+		blue - green >= 60 &&
+		red >= 110 &&
+		blue >= 100;
+	
+	//return red > 240 && green > 90 && green < 190 && blue > 240; // OLD COLOR FUNCTION
 }
 
 void FirstColorSorting(char* data, int height, int width) {
@@ -583,7 +602,7 @@ int main(int, char**)
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
 	::RegisterClassEx(&wc);
-	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot  "), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
+	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot   "), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
 
 
 	HICON hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(MAINICON));
@@ -699,7 +718,7 @@ int main(int, char**)
 				ImGui::TextColored(ImVec4(0.4f, 0, 1, 1), "Running");
 			}
 			if(full360 <= 0) {
-				ImGui::Text("TO USE THIS COLORBOT \nFULL360 MUST BE CONFIGURED CORRECTLY\nTHIS IS DIFFERENT FOR ALL COMPUTERS\n\nTHE OPTIMAL SPEED I FOUND OUT TO BE AROUND 0.2\nSO IMO, ONLY CHANGE FULL360\n(FULL360 SHOULD BE AROUND 10000-25000)");
+				ImGui::Text("TO USE THIS COLORBOT \nFULL360 MUST BE CONFIGURED CORRECTLY\nTHIS IS DIFFERENT FOR ALL COMPUTERS\n\nTHE OPTIMAL SPEED I FOUND OUT TO BE AROUND 0.2\nSO IMO, ONLY CHANGE FULL360\n(FULL360 SHOULD BE AROUND 5000-25000)");
 			}
 			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 			ImGui::End();
