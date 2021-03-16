@@ -83,6 +83,7 @@ int holdKeyIndex = 0;
 int holdKey = VK_MENU;
 bool isHold = false;
 bool invertHold = false;
+bool testFull360 = false;
 int offset[2] = {
 	0,5
 };
@@ -142,48 +143,19 @@ ComPtr<IDXGISurface1> gdiSurface;
 ComPtr<ID3D11Texture2D> texture;
 HWND game_window;
 
-
 InterceptionContext context;
-InterceptionDevice device;
-InterceptionStroke stroke;
-
-void NormalMouse() {
-	while(interception_receive(context, device = interception_wait(context), &stroke, 1) > 0) {
-		if(interception_is_mouse(device))
-		{
-			InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
-			interception_send(context, device, &stroke, 1);
-		}
-	}
-}
 
 void InitMoveMouse() {
-	cout << "Loading Interception..." << endl;
-
 	context = interception_create_context();
-	interception_set_filter(context, interception_is_mouse, INTERCEPTION_FILTER_MOUSE_MOVE);
-	device = interception_wait(context);
-
-	while(interception_receive(context, device = interception_wait(context), &stroke, 1) > 0) {
-		if(interception_is_mouse(device))
-		{
-			InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
-			interception_send(context, device, &stroke, 1);
-			break;
-		}
-	}
-	cout << "Interception Loaded" << endl;
-	thread normal(NormalMouse);
-	normal.detach();
 }
 
-void MoveMouse(int dx, int dy) {
-	InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
-	mstroke.flags = 0;
+void MoveMouse(int dx, int dy) { // REMOVED BLOAT THANKS TO Annihil
+	InterceptionMouseStroke mstroke;
+	mstroke.flags = INTERCEPTION_MOUSE_MOVE_RELATIVE;
 	mstroke.information = 0;
 	mstroke.x = dx + offset[0];
 	mstroke.y = dy + offset[1];
-	interception_send(context, device, &stroke, 1);
+	interception_send(context, INTERCEPTION_MOUSE(0), (InterceptionStroke*)&mstroke, 1);
 }
 
 typedef void(*ColorSortingMethod)(char*, int, int);
@@ -243,7 +215,7 @@ bool IsPurpleColor(unsigned short red, unsigned short green, unsigned short blue
 		blue - green >= 60 &&
 		red >= 110 &&
 		blue >= 100;
-	
+
 	//return red > 240 && green > 90 && green < 190 && blue > 240; // OLD COLOR FUNCTION
 }
 
@@ -477,7 +449,13 @@ void ScreenGrabMain() {
 			}
 
 			if(shouldRun) {
-				ScreenGrab();
+				if(testFull360) {
+					MoveMouse(full360, 0);
+					Sleep(1000);
+				}
+				else {
+					ScreenGrab();
+				}
 			}
 			else {
 				Sleep(10);
@@ -602,7 +580,8 @@ int main(int, char**)
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
 	::RegisterClassEx(&wc);
-	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot   "), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
+	   
+	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot V2"), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
 
 
 	HICON hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(MAINICON));
@@ -671,18 +650,33 @@ int main(int, char**)
 			ImGui::Begin("Settings", 0, flags);
 
 			ImGui::Text("Setting");
-			ImGui::SliderFloat("Speed", &speed, 0.0f, 1.0f);
-			ImGui::SliderInt("FovX", &maxX, 50, width / 2);
-			ImGui::SliderInt("FovY", &maxY, 50, height / 2);
-			ImGui::InputInt2("Offset XY", offset);
-			ImGui::InputInt("Full360", &full360);
 
-			ImGui::Text("Flick Aimbot");
-			ImGui::Checkbox("Flick", &flickAim);
-			ImGui::InputInt("Flick Update ms", &flickAimTime);
+			if(ImGui::Button(testFull360 ? "Stop Full360" : "Start Full360")) {
+				testFull360 = !testFull360;
+			}
+			if(testFull360) {
+				ImGui::InputInt("Full360", &full360);
 
-			if(flickAimTime < 0) {
-				flickAimTime = 0;
+				if(holdKeyIndex > 0) {
+					ImGui::Text("Testing Full360, you most scope with vandal\nand configure so it turns 360 degrees\nwhen pressing [%s]", holdKeys[holdKeyIndex]);
+				}
+				else {
+					ImGui::Text("Testing Full360, you most scope with vandal\nand configure so it turns 360 degrees");
+				}
+			}
+			else {
+				ImGui::SliderFloat("Speed", &speed, 0.0f, 1.0f);
+				ImGui::SliderInt("FovX", &maxX, 50, width / 2);
+				ImGui::SliderInt("FovY", &maxY, 50, height / 2);
+				ImGui::InputInt2("Offset XY", offset);
+				ImGui::InputInt("Full360", &full360);
+				ImGui::Text("Flick Aimbot");
+				ImGui::Checkbox("Flick", &flickAim);
+				ImGui::InputInt("Flick Update ms", &flickAimTime);
+
+				if(flickAimTime < 0) {
+					flickAimTime = 0;
+				}
 			}
 
 			ImGui::Text("Input Settings");
@@ -693,19 +687,23 @@ int main(int, char**)
 
 			if(holdKeyIndex > 0) {
 				ImGui::Combo(isHold ? "Hold key" : "Toggle Key", &holdKeyIndex, holdKeys, hold_arry_size);
+				holdKey = holdKeysCodes[holdKeyIndex];
 			}
 			else {
 				ImGui::TextColored(ImVec4(0.4f, 0, 1, 1), "Custom key used: 0x%llX", holdKey);
 			}
 
-			ImGui::Text("Sorting Method");
+			if(!testFull360) {
+				ImGui::Text("Sorting Method");
 
-			if(ImGui::Button(currentSortingMethodName)) {
-				sortingCounter++;
-				UpdateSortingMethod(sortingCounter);
+				if(ImGui::Button(currentSortingMethodName)) {
+					sortingCounter++;
+					UpdateSortingMethod(sortingCounter);
+				}
+				ImGui::SameLine();
+				ImGui::Text(currentSortingMethodDescript);
 			}
-			ImGui::SameLine();
-			ImGui::Text(currentSortingMethodDescript);
+
 			if(ImGui::Button("Save Config")) {
 				SaveConfig();
 			}
