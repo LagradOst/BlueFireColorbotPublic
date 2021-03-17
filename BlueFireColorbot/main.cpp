@@ -144,18 +144,46 @@ ComPtr<ID3D11Texture2D> texture;
 HWND game_window;
 
 InterceptionContext context;
+InterceptionDevice device;
+InterceptionStroke stroke;
 
-void InitMoveMouse() {
-	context = interception_create_context();
+void NormalMouse() {
+	while(interception_receive(context, device = interception_wait(context), &stroke, 1) > 0) {
+		if(interception_is_mouse(device))
+		{
+			InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
+			interception_send(context, device, &stroke, 1);
+		}
+	}
 }
 
-void MoveMouse(int dx, int dy) { // REMOVED BLOAT THANKS TO Annihil
-	InterceptionMouseStroke mstroke;
-	mstroke.flags = INTERCEPTION_MOUSE_MOVE_RELATIVE;
+void InitMoveMouse() {
+	cout << "Loading Interception..." << endl;
+
+	context = interception_create_context();
+	interception_set_filter(context, interception_is_mouse, INTERCEPTION_FILTER_MOUSE_MOVE);
+	device = interception_wait(context);
+
+	while(interception_receive(context, device = interception_wait(context), &stroke, 1) > 0) {
+		if(interception_is_mouse(device))
+		{
+			InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
+			interception_send(context, device, &stroke, 1);
+			break;
+		}
+	}
+	cout << "Interception Loaded" << endl;
+	thread normal(NormalMouse);
+	normal.detach();
+}
+
+void MoveMouse(int dx, int dy) {
+	InterceptionMouseStroke& mstroke = *(InterceptionMouseStroke*)&stroke;
+	mstroke.flags = 0;
 	mstroke.information = 0;
 	mstroke.x = dx + offset[0];
 	mstroke.y = dy + offset[1];
-	interception_send(context, INTERCEPTION_MOUSE(0), (InterceptionStroke*)&mstroke, 1);
+	interception_send(context, device, &stroke, 1);
 }
 
 typedef void(*ColorSortingMethod)(char*, int, int);
@@ -581,7 +609,7 @@ int main(int, char**)
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
 	::RegisterClassEx(&wc);
 	   
-	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot V2"), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
+	HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("BLUEFIRE1337's Colorbot V3"), WS_OVERLAPPEDWINDOW, 0, 0, 400, 500, NULL, NULL, wc.hInstance, NULL);
 
 
 	HICON hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(MAINICON));
